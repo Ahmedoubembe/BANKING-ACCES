@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/banking-requests")
@@ -59,7 +61,7 @@ public class BankingRequestController {
                     .serviceType(serviceType.trim())
                     .modificationType(modificationType.trim())
                     .otherMessage(otherMessage != null ? otherMessage.trim() : null)
-                    .status("VALIDATED")
+                    .status("PENDING")
                     .build();
 
             // Sauvegarder
@@ -81,6 +83,103 @@ public class BankingRequestController {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Erreur lors de la soumission de la demande: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Récupérer toutes les demandes
+     */
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllRequests() {
+        try {
+            logger.info("Récupération de toutes les demandes banking");
+
+            List<BankingRequest> requests = bankingRequestService.getAllRequests();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("total", requests.size());
+            response.put("data", requests);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des demandes", e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la récupération des demandes");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Récupérer les demandes d'un client par numéro de téléphone
+     */
+
+    @GetMapping("/phone/{phoneNumber}")
+    public ResponseEntity<?> getRequestsByPhone(@PathVariable String phoneNumber) {
+        try {
+            logger.info("Récupération des demandes pour le numéro: {}", phoneNumber);
+
+            List<BankingRequest> requests = bankingRequestService.getRequestsByPhoneNumber(phoneNumber);
+
+            // Transformer les données pour ne retourner que les champs voulus
+            List<Map<String, Object>> simplifiedRequests = requests.stream()
+                    .map(request -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("service", request.getServiceType());
+                        data.put("typeModification", request.getModificationType());
+                        data.put("dateSubmission", request.getCreatedDate().toString());
+                        data.put("status", request.getStatus());
+                        return data;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("total", simplifiedRequests.size());
+            response.put("data", simplifiedRequests);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des demandes pour: {}", phoneNumber, e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la récupération des demandes");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Récupérer les demandes par statut
+     */
+    @GetMapping("/status/{status}")
+    public ResponseEntity<?> getRequestsByStatus(@PathVariable String status) {
+        try {
+            logger.info("Récupération des demandes avec statut: {}", status);
+
+            List<BankingRequest> requests = bankingRequestService.getRequestsByStatus(status);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("total", requests.size());
+            response.put("data", requests);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des demandes par statut: {}", status, e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la récupération des demandes");
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }

@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/proxy/otp")
-@CrossOrigin(origins = {"http://localhost:4202"})
+@CrossOrigin(origins = {"http://localhost:4202", "https://mobile.bamis.mr:4455"})
 public class OtpProxyController {
 
     @Autowired
@@ -18,17 +18,23 @@ public class OtpProxyController {
 
     private final String OTP_SERVICE_URL = "http://otp.bamis.mr:8080/otp/api/otp";
 
-
     @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateOtp(@RequestBody Map<String, Object> request) {
         try {
             System.out.println("Proxy Banking: Génération OTP demandée");
             System.out.println("URL cible: " + OTP_SERVICE_URL + "/generate");
-            System.out.println("Request body: " + request);
+            System.out.println("Request body reçu: " + request);
+
+            // Transformer les clés pour le service OTP
+            Map<String, Object> otpRequest = new HashMap<>();
+            otpRequest.put("numeroTelephone", request.get("phoneNumber"));
+            otpRequest.put("typeAction", "ACCESS_CREATION"); // Type d'action pour le banking
+
+            System.out.println("Request body transformé: " + otpRequest);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     OTP_SERVICE_URL + "/generate",
-                    request,
+                    otpRequest,
                     Map.class
             );
 
@@ -48,10 +54,22 @@ public class OtpProxyController {
     public ResponseEntity<Map<String, Object>> validateOtp(@RequestBody Map<String, Object> request) {
         try {
             System.out.println("Proxy Banking: Validation OTP demandée");
+            System.out.println("Request body reçu: " + request);
+
+            // Transformer les clés pour le service OTP
+            Map<String, Object> otpRequest = new HashMap<>();
+            otpRequest.put("numeroTelephone", request.get("phoneNumber"));
+
+            // Transformer les clés pour le service OTP
+            otpRequest.put("typeAction", "ACCESS_CREATION");
+
+            otpRequest.put("codeOtp", request.get("otpCode"));
+
+            System.out.println("Request body transformé: " + otpRequest);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     OTP_SERVICE_URL + "/validate",
-                    request,
+                    otpRequest,
                     Map.class
             );
 
@@ -71,10 +89,18 @@ public class OtpProxyController {
     public ResponseEntity<Map<String, Object>> resendOtp(@RequestBody Map<String, Object> request) {
         try {
             System.out.println("Proxy Banking: Renvoi OTP demandé");
+            System.out.println("Request body reçu: " + request);
+
+            // Transformer les clés pour le service OTP
+            Map<String, Object> otpRequest = new HashMap<>();
+            otpRequest.put("numeroTelephone", request.get("phoneNumber"));
+            otpRequest.put("typeAction", "ACCESS_CREATION");
+
+            System.out.println("Request body transformé: " + otpRequest);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     OTP_SERVICE_URL + "/resend",
-                    request,
+                    otpRequest,
                     Map.class
             );
 
