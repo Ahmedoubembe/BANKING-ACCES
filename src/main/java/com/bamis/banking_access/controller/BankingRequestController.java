@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/banking-requests")
-@CrossOrigin(origins = {"http://localhost:4202"})
+@CrossOrigin(origins = {"http://localhost:4202", "http://localhost:4200","http://172.24.1.20:8080" })
 @RequiredArgsConstructor
 public class BankingRequestController {
 
