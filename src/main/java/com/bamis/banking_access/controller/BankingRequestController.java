@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.bamis.banking_access.repository.ClientInfoRepository;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class BankingRequestController {
 
     private final BankingRequestService bankingRequestService;
+    private final ClientInfoRepository clientInfoRepository;
     private static final Logger logger = LoggerFactory.getLogger(BankingRequestController.class);
 
     /**
@@ -98,10 +100,37 @@ public class BankingRequestController {
 
             List<BankingRequest> requests = bankingRequestService.getAllRequests();
 
+            List<Map<String, Object>> enrichedRequests = requests.stream()
+                    .map(request -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", request.getId());
+                        data.put("phoneNumber", request.getPhoneNumber());
+                        data.put("clientName", request.getClientName());
+                        data.put("email", request.getEmail());
+                        data.put("serviceType", request.getServiceType());
+                        data.put("modificationType", request.getModificationType());
+                        data.put("otherMessage", request.getOtherMessage());
+                        data.put("status", request.getStatus());
+                        data.put("createdDate", request.getCreatedDate());
+                        data.put("updatedDate", request.getUpdatedDate());
+
+                        clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
+                                .ifPresent(client -> {
+                                    data.put("custIden", client.getCustIden());
+                                    data.put("emailSys", client.getEmail());
+                                    data.put("firstName", client.getFirstName());
+                                    data.put("lastName", client.getLastName());
+                                    data.put("agence", client.getWalletCode().substring(0, 5));
+                                });
+
+                        return data;
+                    })
+                    .collect(Collectors.toList());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("total", requests.size());
-            response.put("data", requests);
+            response.put("total", enrichedRequests.size());
+            response.put("data", enrichedRequests);
 
             return ResponseEntity.ok(response);
 
