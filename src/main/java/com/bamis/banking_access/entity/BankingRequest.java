@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "banking_requests")
@@ -20,6 +21,9 @@ public class BankingRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "reference", nullable = false, unique = true, length = 50)
+    private String reference;
+
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
@@ -30,16 +34,16 @@ public class BankingRequest {
     private String email;
 
     @Column(name = "service_type", nullable = false, length = 50)
-    private String serviceType; // 'mobile' ou 'web'
+    private String serviceType;
 
     @Column(name = "modification_type", nullable = false, length = 50)
-    private String modificationType; // 'access', 'subscription', 'password', 'other'
+    private String modificationType;
 
     @Column(name = "other_message", columnDefinition = "TEXT")
     private String otherMessage;
 
     @Column(name = "status", nullable = false, length = 50)
-    private String status; // 'PENDING', 'VALIDATED', 'PROCESSED', 'REJECTED'
+    private String status;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
@@ -53,10 +57,32 @@ public class BankingRequest {
         if (this.status == null) {
             this.status = "PENDING";
         }
+        if (this.reference == null) {
+            this.reference = generateReference();
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedDate = LocalDateTime.now();
+    }
+
+    private String generateReference() {
+        String serviceCode;
+        if (this.serviceType != null && this.serviceType.toUpperCase().contains("MOBILE")) {
+            serviceCode = "MOB";
+        } else if (this.serviceType != null && this.serviceType.toUpperCase().contains("WEB")) {
+            serviceCode = "WEB";
+        } else {
+            serviceCode = "XXX";
+        }
+
+        String modCode = this.modificationType != null
+                ? this.modificationType.substring(0, Math.min(3, this.modificationType.length())).toUpperCase()
+                : "XXX";
+
+        String timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(this.createdDate);
+
+        return serviceCode + "-" + modCode + "-" + timestamp;
     }
 }

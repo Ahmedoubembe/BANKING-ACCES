@@ -74,6 +74,8 @@ public class BankingRequestController {
             response.put("success", true);
             response.put("message", "Votre demande a été soumise avec succès");
             response.put("requestId", savedRequest.getId());
+            response.put("reference", savedRequest.getReference());
+
 
             logger.info("Demande banking créée avec succès - ID: {}", savedRequest.getId());
 
@@ -113,6 +115,7 @@ public class BankingRequestController {
                         data.put("status", request.getStatus());
                         data.put("createdDate", request.getCreatedDate());
                         data.put("updatedDate", request.getUpdatedDate());
+                        data.put("reference", request.getReference());
 
                         clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
                                 .ifPresent(client -> {
@@ -164,6 +167,7 @@ public class BankingRequestController {
                         data.put("typeModification", request.getModificationType());
                         data.put("dateSubmission", request.getCreatedDate().toString());
                         data.put("status", request.getStatus());
+                        data.put("reference", request.getReference());
                         return data;
                     })
                     .collect(Collectors.toList());
@@ -200,6 +204,7 @@ public class BankingRequestController {
             response.put("success", true);
             response.put("total", requests.size());
             response.put("data", requests);
+
 
             return ResponseEntity.ok(response);
 
