@@ -44,7 +44,7 @@ public class PrimaryDataSourceConfig {
 
         return builder
                 .dataSource(dataSource)
-                .packages("com.example.jwt_demo.model")
+                .packages("com.bamis.banking_access.entity")
                 .persistenceUnit("primary")
                 .properties(properties)
                 .build();

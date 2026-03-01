@@ -42,7 +42,7 @@ public class SecondaryDataSourceConfig {
 
         return builder
                 .dataSource(dataSource)
-                .packages("com.example.jwt_demo.model.oracle")
+                .packages("com.bamis.banking_access.entity.oracle")
                 .persistenceUnit("secondary")
                 .properties(properties)
                 .build();
