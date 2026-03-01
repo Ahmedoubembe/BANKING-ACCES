@@ -38,7 +38,8 @@ public class JustificatifService {
             throw new IllegalArgumentException("Aucun fichier fourni");
         }
 
-        Path uploadDir = Paths.get(uploadBaseDir, String.valueOf(requestId));
+        String folderName = bankingRequest.getReference();
+        Path uploadDir = Paths.get(uploadBaseDir, folderName);
         Files.createDirectories(uploadDir);
 
         List<String> uploadedFileNames = new ArrayList<>();
@@ -50,8 +51,8 @@ public class JustificatifService {
 
             String originalFileName = file.getOriginalFilename();
             Path destinationPath = uploadDir.resolve(originalFileName);
-//            file.transferTo(destinationPath.toFile());
             Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+
             Justificatif justificatif = Justificatif.builder()
                     .bankingRequest(bankingRequest)
                     .fileName(originalFileName)
