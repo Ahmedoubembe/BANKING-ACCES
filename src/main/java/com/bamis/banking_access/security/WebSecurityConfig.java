@@ -176,7 +176,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Activer CORS avec la configuration
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .exceptionHandling(exceptionHandling ->
                         exceptionHandling.authenticationEntryPoint(unauthorizedHandler)
                 )
@@ -185,11 +185,16 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                // Permettre tous les accès temporairement pour les tests
-                                .anyRequest().permitAll()
+                                // Routes publiques
+                                .antMatchers("/api/auth/signin").permitAll()
+                                .antMatchers("/api/banking-requests/submit").permitAll()
+                                .antMatchers("/api/banking-requests/phone/**").permitAll()
+                                .antMatchers("/api/banking-requests/status/**").permitAll()
+                                .antMatchers("/api/proxy/otp/**").permitAll()
+                                // Tout le reste nécessite un token
+                                .anyRequest().authenticated()
                 );
 
-        // Ajouter le filtre JWT (même si sécurité désactivée, pour les tests futurs)
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

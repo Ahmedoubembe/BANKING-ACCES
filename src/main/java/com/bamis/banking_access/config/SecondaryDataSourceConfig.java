@@ -38,7 +38,7 @@ public class SecondaryDataSourceConfig {
 
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.OracleDialect");
-        properties.put("hibernate.hbm2ddl.auto", "update");
+        properties.put("hibernate.hbm2ddl.auto", "none");
 
         return builder
                 .dataSource(dataSource)

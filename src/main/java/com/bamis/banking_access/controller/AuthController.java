@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
+//@CrossOrigin(origins = {"http://localhost:4202", "http://localhost:4200", "http://172.24.1.20:8080"})
+@CrossOrigin(origins = "http://localhost:4200", allowedHeaders = "*")
+
 public class AuthController {
 
     @Autowired
@@ -96,7 +99,7 @@ public class AuthController {
 
             // ÉTAPE 4 : Charger UserPrincipal et générer JWT
             UserPrincipal userPrincipal = UserPrincipal.create(user, userGlobal.getPwd());
-            String jwt = jwtUtils.generateToken(userPrincipal.getEmail());
+            String jwt = jwtUtils.generateToken(userPrincipal.getNomUtilisateur());
 
             List<String> roles = userPrincipal.getAuthorities().stream()
                     .map(item -> item.getAuthority())

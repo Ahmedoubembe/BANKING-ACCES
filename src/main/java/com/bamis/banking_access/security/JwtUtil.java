@@ -28,9 +28,9 @@ public class JwtUtil {
     }
 
     // Generate JWT token avec email
-    public String generateToken(String email) {
+    public String generateToken(String username) {
         return Jwts.builder()
-                .subject(email) // Utilise l'email comme subject
+                .subject(username) // Utilise le username comme subject
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key, Jwts.SIG.HS256)

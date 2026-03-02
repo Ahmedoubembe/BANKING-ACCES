@@ -28,16 +28,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>logback-classic</artifactId>-->
-<!--                    <groupId>ch.qos.logback</groupId>-->
-<!--                </exclusion>-->
-<!--                &lt;!&ndash;				<exclusion>&ndash;&gt;-->
-<!--                &lt;!&ndash;					<groupId>org.springframework.boot</groupId>&ndash;&gt;-->
-<!--                &lt;!&ndash;					<artifactId>spring-boot-starter-tomcat</artifactId>&ndash;&gt;-->
-<!--                &lt;!&ndash;				</exclusion>&ndash;&gt;-->
-<!--            </exclusions>-->
+            <exclusions>
+                <exclusion>
+                    <artifactId>logback-classic</artifactId>
+                    <groupId>ch.qos.logback</groupId>
+                </exclusion>
+                <!--				<exclusion>-->
+                <!--					<groupId>org.springframework.boot</groupId>-->
+                <!--					<artifactId>spring-boot-starter-tomcat</artifactId>-->
+                <!--				</exclusion>-->
+            </exclusions>
         </dependency>
 
         <!-- Spring Boot Starter Data JPA -->
@@ -61,35 +61,35 @@
         </dependency>
 
         <!-- Spring Boot Starter Tomcat (provided for WAR deployment) -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-tomcat</artifactId>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-devtools</artifactId>-->
-<!--            <scope>provided</scope>-->
-<!--            <optional>true</optional>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>logback-classic</artifactId>-->
-<!--                    <groupId>ch.qos.logback</groupId>-->
-<!--                </exclusion>-->
-<!--                &lt;!&ndash;				<exclusion>&ndash;&gt;-->
-<!--                &lt;!&ndash;					<groupId>org.springframework.boot</groupId>&ndash;&gt;-->
-<!--                &lt;!&ndash;					<artifactId>spring-boot-starter-tomcat</artifactId>&ndash;&gt;-->
-<!--                &lt;!&ndash;				</exclusion>&ndash;&gt;-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <artifactId>logback-classic</artifactId>
+                    <groupId>ch.qos.logback</groupId>
+                </exclusion>
+                <!--				<exclusion>-->
+                <!--					<groupId>org.springframework.boot</groupId>-->
+                <!--					<artifactId>spring-boot-starter-tomcat</artifactId>-->
+                <!--				</exclusion>-->
+            </exclusions>
+        </dependency>
 
-<!--        &lt;!&ndash; Spring Boot Starter Test &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <!-- Spring Boot Starter Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
 
 

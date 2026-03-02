@@ -18,6 +18,7 @@ import java.io.IOException;
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
+
     @Autowired
     private JwtUtil jwtUtils;
 
@@ -34,8 +35,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String email = jwtUtils.getEmailFromToken(jwt); // Utilise getEmailFromToken
+                String username = jwtUtils.getUsernameFromToken(jwt); // retourne le nomUtilisateur
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 // Vérifications supplémentaires de sécurité
                 if (userDetails != null && userDetails.isEnabled() &&
