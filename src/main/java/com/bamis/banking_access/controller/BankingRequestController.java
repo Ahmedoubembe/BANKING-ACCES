@@ -36,61 +36,61 @@ public class BankingRequestController {
     // ENDPOINT — Soumettre une demande
     // POST /api/banking-requests/submit
     // -------------------------------------------------------------------------
-
-    @PostMapping("/submit")
-    public ResponseEntity<?> submitRequest(@RequestBody Map<String, Object> requestBody) {
-        try {
-            String phoneNumber = (String) requestBody.get("phoneNumber");
-            String clientName = (String) requestBody.get("clientName");
-            String email = (String) requestBody.get("email");
-            String serviceType = (String) requestBody.get("serviceType");
-            String modificationType = (String) requestBody.get("modificationType");
-            String otherMessage = (String) requestBody.get("otherMessage");
-
-            if (phoneNumber == null || phoneNumber.trim().isEmpty() ||
-                    clientName == null || clientName.trim().isEmpty() ||
-                    email == null || email.trim().isEmpty() ||
-                    serviceType == null || serviceType.trim().isEmpty() ||
-                    modificationType == null || modificationType.trim().isEmpty()) {
-
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "Tous les champs obligatoires doivent etre renseignes");
-                return ResponseEntity.badRequest().body(errorResponse);
-            }
-
-            logger.info("Soumission demande banking pour: {} - Service: {} - Type: {}",
-                    phoneNumber, serviceType, modificationType);
-
-            BankingRequest request = BankingRequest.builder()
-                    .phoneNumber(phoneNumber.trim())
-                    .clientName(clientName.trim())
-                    .email(email.trim())
-                    .serviceType(serviceType.trim())
-                    .modificationType(modificationType.trim())
-                    .otherMessage(otherMessage != null ? otherMessage.trim() : null)
-                    .status("PENDING")
-                    .build();
-
-            BankingRequest savedRequest = bankingRequestService.createRequest(request);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Votre demande a ete soumise avec succes");
-            response.put("requestId", savedRequest.getId());
-            response.put("reference", savedRequest.getReference());
-
-            logger.info("Demande banking creee avec succes - ID: {}", savedRequest.getId());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            logger.error("Erreur lors de la soumission de la demande banking", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "Erreur lors de la soumission de la demande: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
+//
+//    @PostMapping("/submit")
+//    public ResponseEntity<?> submitRequest(@RequestBody Map<String, Object> requestBody) {
+//        try {
+//            String phoneNumber = (String) requestBody.get("phoneNumber");
+//            String clientName = (String) requestBody.get("clientName");
+//            String email = (String) requestBody.get("email");
+//            String serviceType = (String) requestBody.get("serviceType");
+//            String modificationType = (String) requestBody.get("modificationType");
+//            String otherMessage = (String) requestBody.get("otherMessage");
+//
+//            if (phoneNumber == null || phoneNumber.trim().isEmpty() ||
+//                    clientName == null || clientName.trim().isEmpty() ||
+//                    email == null || email.trim().isEmpty() ||
+//                    serviceType == null || serviceType.trim().isEmpty() ||
+//                    modificationType == null || modificationType.trim().isEmpty()) {
+//
+//                Map<String, Object> errorResponse = new HashMap<>();
+//                errorResponse.put("success", false);
+//                errorResponse.put("message", "Tous les champs obligatoires doivent etre renseignes");
+//                return ResponseEntity.badRequest().body(errorResponse);
+//            }
+//
+//            logger.info("Soumission demande banking pour: {} - Service: {} - Type: {}",
+//                    phoneNumber, serviceType, modificationType);
+//
+//            BankingRequest request = BankingRequest.builder()
+//                    .phoneNumber(phoneNumber.trim())
+//                    .clientName(clientName.trim())
+//                    .email(email.trim())
+//                    .serviceType(serviceType.trim())
+//                    .modificationType(modificationType.trim())
+//                    .otherMessage(otherMessage != null ? otherMessage.trim() : null)
+//                    .status("PENDING")
+//                    .build();
+//
+//            BankingRequest savedRequest = bankingRequestService.createRequest(request);
+//
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("success", true);
+//            response.put("message", "Votre demande a ete soumise avec succes");
+//            response.put("requestId", savedRequest.getId());
+//            response.put("reference", savedRequest.getReference());
+//
+//            logger.info("Demande banking creee avec succes - ID: {}", savedRequest.getId());
+//            return ResponseEntity.ok(response);
+//
+//        } catch (Exception e) {
+//            logger.error("Erreur lors de la soumission de la demande banking", e);
+//            Map<String, Object> errorResponse = new HashMap<>();
+//            errorResponse.put("success", false);
+//            errorResponse.put("message", "Erreur lors de la soumission de la demande: " + e.getMessage());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//        }
+//    }
 
     // -------------------------------------------------------------------------
     // ENDPOINT — Recuperer toutes les demandes
@@ -152,41 +152,41 @@ public class BankingRequestController {
     // ENDPOINT — Recuperer par numero de telephone
     // GET /api/banking-requests/phone/{phoneNumber}
     // -------------------------------------------------------------------------
-
-    @GetMapping("/phone/{phoneNumber}")
-    public ResponseEntity<?> getRequestsByPhone(@PathVariable String phoneNumber) {
-        try {
-            logger.info("Recuperation des demandes pour le numero: {}", phoneNumber);
-
-            List<BankingRequest> requests = bankingRequestService.getRequestsByPhoneNumber(phoneNumber);
-
-            List<Map<String, Object>> simplifiedRequests = requests.stream()
-                    .map(request -> {
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("service", request.getServiceType());
-                        data.put("typeModification", request.getModificationType());
-                        data.put("dateSubmission", request.getCreatedDate().toString());
-                        data.put("status", request.getStatus());
-                        data.put("reference", request.getReference());
-                        return data;
-                    })
-                    .collect(Collectors.toList());
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("total", simplifiedRequests.size());
-            response.put("data", simplifiedRequests);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            logger.error("Erreur lors de la recuperation des demandes pour: {}", phoneNumber, e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "Erreur lors de la recuperation des demandes");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
+//
+//    @GetMapping("/phone/{phoneNumber}")
+//    public ResponseEntity<?> getRequestsByPhone(@PathVariable String phoneNumber) {
+//        try {
+//            logger.info("Recuperation des demandes pour le numero: {}", phoneNumber);
+//
+//            List<BankingRequest> requests = bankingRequestService.getRequestsByPhoneNumber(phoneNumber);
+//
+//            List<Map<String, Object>> simplifiedRequests = requests.stream()
+//                    .map(request -> {
+//                        Map<String, Object> data = new HashMap<>();
+//                        data.put("service", request.getServiceType());
+//                        data.put("typeModification", request.getModificationType());
+//                        data.put("dateSubmission", request.getCreatedDate().toString());
+//                        data.put("status", request.getStatus());
+//                        data.put("reference", request.getReference());
+//                        return data;
+//                    })
+//                    .collect(Collectors.toList());
+//
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("success", true);
+//            response.put("total", simplifiedRequests.size());
+//            response.put("data", simplifiedRequests);
+//
+//            return ResponseEntity.ok(response);
+//
+//        } catch (Exception e) {
+//            logger.error("Erreur lors de la recuperation des demandes pour: {}", phoneNumber, e);
+//            Map<String, Object> errorResponse = new HashMap<>();
+//            errorResponse.put("success", false);
+//            errorResponse.put("message", "Erreur lors de la recuperation des demandes");
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//        }
+//    }
 
     // -------------------------------------------------------------------------
     // ENDPOINT — Recuperer par statut

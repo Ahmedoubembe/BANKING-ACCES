@@ -186,6 +186,8 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 // Routes publiques
+                                .antMatchers("/**/*.{js,html,css,scss}").permitAll()
+                                .antMatchers("/").permitAll()
                                 .antMatchers("/api/auth/signin").permitAll()
                                 .antMatchers("/api/banking-requests/submit").permitAll()
                                 .antMatchers("/api/banking-requests/phone/**").permitAll()
