@@ -124,6 +124,7 @@ public class AuthController {
             response.put("prenom", userPrincipal.getPrenom());
             response.put("nom", userPrincipal.getNom());
             response.put("roles", roles);
+            response.put("agence", user.getAgence());
 
             return ResponseEntity.ok(response);
 

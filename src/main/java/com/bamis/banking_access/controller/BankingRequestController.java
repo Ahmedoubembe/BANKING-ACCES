@@ -148,6 +148,56 @@ public class BankingRequestController {
         }
     }
 
+    @GetMapping("/agence/{agence}")
+    public ResponseEntity<?> getRequestsByAgence(@PathVariable String agence) {
+        try {
+            List<BankingRequest> requests = bankingRequestService.getAllRequests();
+
+            List<Map<String, Object>> enrichedRequests = requests.stream()
+                    .map(request -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", request.getId());
+                        data.put("phoneNumber", request.getPhoneNumber());
+                        data.put("clientName", request.getClientName());
+                        data.put("email", request.getEmail());
+                        data.put("serviceType", request.getServiceType());
+                        data.put("modificationType", request.getModificationType());
+                        data.put("otherMessage", request.getOtherMessage());
+                        data.put("status", request.getStatus());
+                        data.put("createdDate", request.getCreatedDate());
+                        data.put("updatedDate", request.getUpdatedDate());
+                        data.put("reference", request.getReference());
+
+                        clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
+                                .ifPresent(client -> {
+                                    data.put("custIden", client.getCustIden());
+                                    data.put("emailSys", client.getEmail());
+                                    data.put("firstName", client.getFirstName());
+                                    data.put("lastName", client.getLastName());
+                                    data.put("agence", client.getWalletCode().substring(0, 5));
+                                });
+
+                        return data;
+                    })
+                    .filter(data -> agence.equals(data.get("agence")))  // filtre ici
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("agence", agence);
+            response.put("total", enrichedRequests.size());
+            response.put("data", enrichedRequests);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la recuperation des demandes pour agence={}", agence, e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la recuperation des demandes");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
     // -------------------------------------------------------------------------
     // ENDPOINT — Recuperer par numero de telephone
     // GET /api/banking-requests/phone/{phoneNumber}
