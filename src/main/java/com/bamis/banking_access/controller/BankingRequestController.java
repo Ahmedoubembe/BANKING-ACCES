@@ -1,6 +1,8 @@
 package com.bamis.banking_access.controller;
 
 import com.bamis.banking_access.entity.BankingRequest;
+import com.bamis.banking_access.entity.Justificatif;
+import com.bamis.banking_access.repository.JustificatifRepository;
 import com.bamis.banking_access.service.BankingRequestService;
 import com.bamis.banking_access.service.JustificatifService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.bamis.banking_access.repository.ClientInfoRepository;
 import com.bamis.banking_access.repository.BankingRequestRepository;
+
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -31,66 +34,7 @@ public class BankingRequestController {
     private final BankingRequestRepository bankingRequestRepository;
     private final JustificatifService justificatifService;
     private static final Logger logger = LoggerFactory.getLogger(BankingRequestController.class);
-
-    // -------------------------------------------------------------------------
-    // ENDPOINT — Soumettre une demande
-    // POST /api/banking-requests/submit
-    // -------------------------------------------------------------------------
-//
-//    @PostMapping("/submit")
-//    public ResponseEntity<?> submitRequest(@RequestBody Map<String, Object> requestBody) {
-//        try {
-//            String phoneNumber = (String) requestBody.get("phoneNumber");
-//            String clientName = (String) requestBody.get("clientName");
-//            String email = (String) requestBody.get("email");
-//            String serviceType = (String) requestBody.get("serviceType");
-//            String modificationType = (String) requestBody.get("modificationType");
-//            String otherMessage = (String) requestBody.get("otherMessage");
-//
-//            if (phoneNumber == null || phoneNumber.trim().isEmpty() ||
-//                    clientName == null || clientName.trim().isEmpty() ||
-//                    email == null || email.trim().isEmpty() ||
-//                    serviceType == null || serviceType.trim().isEmpty() ||
-//                    modificationType == null || modificationType.trim().isEmpty()) {
-//
-//                Map<String, Object> errorResponse = new HashMap<>();
-//                errorResponse.put("success", false);
-//                errorResponse.put("message", "Tous les champs obligatoires doivent etre renseignes");
-//                return ResponseEntity.badRequest().body(errorResponse);
-//            }
-//
-//            logger.info("Soumission demande banking pour: {} - Service: {} - Type: {}",
-//                    phoneNumber, serviceType, modificationType);
-//
-//            BankingRequest request = BankingRequest.builder()
-//                    .phoneNumber(phoneNumber.trim())
-//                    .clientName(clientName.trim())
-//                    .email(email.trim())
-//                    .serviceType(serviceType.trim())
-//                    .modificationType(modificationType.trim())
-//                    .otherMessage(otherMessage != null ? otherMessage.trim() : null)
-//                    .status("PENDING")
-//                    .build();
-//
-//            BankingRequest savedRequest = bankingRequestService.createRequest(request);
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("message", "Votre demande a ete soumise avec succes");
-//            response.put("requestId", savedRequest.getId());
-//            response.put("reference", savedRequest.getReference());
-//
-//            logger.info("Demande banking creee avec succes - ID: {}", savedRequest.getId());
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la soumission de la demande banking", e);
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la soumission de la demande: " + e.getMessage());
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
+    private final JustificatifRepository justificatifRepository;
 
     // -------------------------------------------------------------------------
     // ENDPOINT — Recuperer toutes les demandes
@@ -198,45 +142,6 @@ public class BankingRequestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-    // -------------------------------------------------------------------------
-    // ENDPOINT — Recuperer par numero de telephone
-    // GET /api/banking-requests/phone/{phoneNumber}
-    // -------------------------------------------------------------------------
-//
-//    @GetMapping("/phone/{phoneNumber}")
-//    public ResponseEntity<?> getRequestsByPhone(@PathVariable String phoneNumber) {
-//        try {
-//            logger.info("Recuperation des demandes pour le numero: {}", phoneNumber);
-//
-//            List<BankingRequest> requests = bankingRequestService.getRequestsByPhoneNumber(phoneNumber);
-//
-//            List<Map<String, Object>> simplifiedRequests = requests.stream()
-//                    .map(request -> {
-//                        Map<String, Object> data = new HashMap<>();
-//                        data.put("service", request.getServiceType());
-//                        data.put("typeModification", request.getModificationType());
-//                        data.put("dateSubmission", request.getCreatedDate().toString());
-//                        data.put("status", request.getStatus());
-//                        data.put("reference", request.getReference());
-//                        return data;
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("total", simplifiedRequests.size());
-//            response.put("data", simplifiedRequests);
-//
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la recuperation des demandes pour: {}", phoneNumber, e);
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la recuperation des demandes");
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
 
     // -------------------------------------------------------------------------
     // ENDPOINT — Recuperer par statut
@@ -340,237 +245,111 @@ public class BankingRequestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    // -------------------------------------------------------------------------
+// ENDPOINT — Récupérer la liste des justificatifs d'une demande
+// GET /api/banking-requests/{id}/justificatifs
+// -------------------------------------------------------------------------
+
+    @GetMapping("/{id}/justificatifs")
+    public ResponseEntity<Map<String, Object>> getJustificatifs(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            System.out.println("=== GET JUSTIFICATIFS - id=" + id + " ===");
+
+            Optional<BankingRequest> optionalRequest = bankingRequestRepository.findById(id);
+            if (!optionalRequest.isPresent()) {
+                System.out.println("❌ Demande introuvable pour id=" + id);
+                response.put("message", "Demande introuvable");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            System.out.println("✅ Demande trouvée: " + optionalRequest.get().getReference());
+
+            List<Justificatif> justificatifs = justificatifRepository.findByBankingRequestId(id);
+            System.out.println("📁 Nombre de justificatifs trouvés en BDD: " + justificatifs.size());
+
+            if (justificatifs.isEmpty()) {
+                System.out.println("⚠️ Aucun justificatif en base pour id=" + id);
+                System.out.println("   → Vérifier la table 'justificatifs' pour banking_request_id=" + id);
+            }
+
+            for (Justificatif j : justificatifs) {
+                System.out.println("  - Fichier: " + j.getFileName() + " | path: " + j.getFilePath() + " | size: " + j.getFileSize());
+            }
+
+            List<Map<String, Object>> files = justificatifs.stream()
+                    .map(j -> {
+                        Map<String, Object> file = new HashMap<>();
+                        file.put("id", j.getId());
+                        file.put("fileName", j.getFileName());
+                        file.put("fileSize", j.getFileSize());
+                        file.put("uploadedAt", j.getUploadedAt());
+                        return file;
+                    })
+                    .collect(Collectors.toList());
+
+            response.put("success", true);
+            response.put("data", files);
+            System.out.println("=== FIN GET JUSTIFICATIFS ===");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.out.println("❌ ERREUR getJustificatifs id=" + id + " : " + e.getMessage());
+            e.printStackTrace();
+            response.put("message", "Erreur : " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+// -------------------------------------------------------------------------
+// ENDPOINT — Télécharger / afficher un justificatif
+// GET /api/banking-requests/{id}/justificatifs/{fileName}
+// -------------------------------------------------------------------------
+
+    @GetMapping("/{id}/justificatifs/{fileName}")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadJustificatif(
+            @PathVariable Long id,
+            @PathVariable String fileName) {
+        try {
+            List<Justificatif> justificatifs = justificatifRepository.findByBankingRequestId(id);
+
+            Justificatif justificatif = justificatifs.stream()
+                    .filter(j -> j.getFileName().equals(fileName))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Fichier introuvable : " + fileName));
+
+            java.nio.file.Path filePath = java.nio.file.Paths.get(justificatif.getFilePath());
+            org.springframework.core.io.Resource resource =
+                    new org.springframework.core.io.UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            String contentType = determineContentType(fileName);
+
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + fileName + "\"")
+                    .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                    .body(resource);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors du telechargement du fichier {} pour id={}", fileName, id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private String determineContentType(String fileName) {
+        String lower = fileName.toLowerCase();
+        if (lower.endsWith(".pdf"))  return "application/pdf";
+        if (lower.endsWith(".png"))  return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".gif"))  return "image/gif";
+        if (lower.endsWith(".webp")) return "image/webp";
+        return "application/octet-stream";
+    }
 }
 
 
-
-
-
-
-
-
-
-
-
-
-//package com.bamis.banking_access.controller;
-//
-//import com.bamis.banking_access.entity.BankingRequest;
-//import com.bamis.banking_access.service.BankingRequestService;
-//import lombok.RequiredArgsConstructor;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//import com.bamis.banking_access.repository.ClientInfoRepository;
-//
-//import java.util.HashMap;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.stream.Collectors;
-//
-//@RestController
-//@RequestMapping("/api/banking-requests")
-//@CrossOrigin(origins = {"http://localhost:4202", "http://localhost:4200","http://172.24.1.20:8080" })
-//@RequiredArgsConstructor
-//public class BankingRequestController {
-//
-//    private final BankingRequestService bankingRequestService;
-//    private final ClientInfoRepository clientInfoRepository;
-//    private static final Logger logger = LoggerFactory.getLogger(BankingRequestController.class);
-//
-//    /**
-//     * Endpoint pour soumettre une demande d'accès banking après validation OTP
-//     */
-//    @PostMapping("/submit")
-//    public ResponseEntity<?> submitRequest(@RequestBody Map<String, Object> requestBody) {
-//        try {
-//            // Récupération des données
-//            String phoneNumber = (String) requestBody.get("phoneNumber");
-//            String clientName = (String) requestBody.get("clientName");
-//            String email = (String) requestBody.get("email");
-//            String serviceType = (String) requestBody.get("serviceType");
-//            String modificationType = (String) requestBody.get("modificationType");
-//            String otherMessage = (String) requestBody.get("otherMessage");
-//
-//            // Validation des champs obligatoires
-//            if (phoneNumber == null || phoneNumber.trim().isEmpty() ||
-//                    clientName == null || clientName.trim().isEmpty() ||
-//                    email == null || email.trim().isEmpty() ||
-//                    serviceType == null || serviceType.trim().isEmpty() ||
-//                    modificationType == null || modificationType.trim().isEmpty()) {
-//
-//                Map<String, Object> errorResponse = new HashMap<>();
-//                errorResponse.put("success", false);
-//                errorResponse.put("message", "Tous les champs obligatoires doivent être renseignés");
-//                return ResponseEntity.badRequest().body(errorResponse);
-//            }
-//
-//            logger.info("Soumission demande banking pour: {} - Service: {} - Type: {}",
-//                    phoneNumber, serviceType, modificationType);
-//
-//            // Créer l'entité
-//            BankingRequest request = BankingRequest.builder()
-//                    .phoneNumber(phoneNumber.trim())
-//                    .clientName(clientName.trim())
-//                    .email(email.trim())
-//                    .serviceType(serviceType.trim())
-//                    .modificationType(modificationType.trim())
-//                    .otherMessage(otherMessage != null ? otherMessage.trim() : null)
-//                    .status("PENDING")
-//                    .build();
-//
-//            // Sauvegarder
-//            BankingRequest savedRequest = bankingRequestService.createRequest(request);
-//
-//            // Réponse succès
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("message", "Votre demande a été soumise avec succès");
-//            response.put("requestId", savedRequest.getId());
-//            response.put("reference", savedRequest.getReference());
-//
-//
-//            logger.info("Demande banking créée avec succès - ID: {}", savedRequest.getId());
-//
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la soumission de la demande banking", e);
-//
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la soumission de la demande: " + e.getMessage());
-//
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//    /**
-//     * Récupérer toutes les demandes
-//     */
-//    @GetMapping("/all")
-//    public ResponseEntity<?> getAllRequests() {
-//        try {
-//            logger.info("Récupération de toutes les demandes banking");
-//
-//            List<BankingRequest> requests = bankingRequestService.getAllRequests();
-//
-//            List<Map<String, Object>> enrichedRequests = requests.stream()
-//                    .map(request -> {
-//                        Map<String, Object> data = new HashMap<>();
-//                        data.put("id", request.getId());
-//                        data.put("phoneNumber", request.getPhoneNumber());
-//                        data.put("clientName", request.getClientName());
-//                        data.put("email", request.getEmail());
-//                        data.put("serviceType", request.getServiceType());
-//                        data.put("modificationType", request.getModificationType());
-//                        data.put("otherMessage", request.getOtherMessage());
-//                        data.put("status", request.getStatus());
-//                        data.put("createdDate", request.getCreatedDate());
-//                        data.put("updatedDate", request.getUpdatedDate());
-//                        data.put("reference", request.getReference());
-//
-//                        clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
-//                                .ifPresent(client -> {
-//                                    data.put("custIden", client.getCustIden());
-//                                    data.put("emailSys", client.getEmail());
-//                                    data.put("firstName", client.getFirstName());
-//                                    data.put("lastName", client.getLastName());
-//                                    data.put("agence", client.getWalletCode().substring(0, 5));
-//                                });
-//
-//                        return data;
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("total", enrichedRequests.size());
-//            response.put("data", enrichedRequests);
-//
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la récupération des demandes", e);
-//
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la récupération des demandes");
-//
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//    /**
-//     * Récupérer les demandes d'un client par numéro de téléphone
-//     */
-//
-//    @GetMapping("/phone/{phoneNumber}")
-//    public ResponseEntity<?> getRequestsByPhone(@PathVariable String phoneNumber) {
-//        try {
-//            logger.info("Récupération des demandes pour le numéro: {}", phoneNumber);
-//
-//            List<BankingRequest> requests = bankingRequestService.getRequestsByPhoneNumber(phoneNumber);
-//
-//            // Transformer les données pour ne retourner que les champs voulus
-//            List<Map<String, Object>> simplifiedRequests = requests.stream()
-//                    .map(request -> {
-//                        Map<String, Object> data = new HashMap<>();
-//                        data.put("service", request.getServiceType());
-//                        data.put("typeModification", request.getModificationType());
-//                        data.put("dateSubmission", request.getCreatedDate().toString());
-//                        data.put("status", request.getStatus());
-//                        data.put("reference", request.getReference());
-//                        return data;
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("total", simplifiedRequests.size());
-//            response.put("data", simplifiedRequests);
-//
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la récupération des demandes pour: {}", phoneNumber, e);
-//
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la récupération des demandes");
-//
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//
-//    /**
-//     * Récupérer les demandes par statut
-//     */
-//    @GetMapping("/status/{status}")
-//    public ResponseEntity<?> getRequestsByStatus(@PathVariable String status) {
-//        try {
-//            logger.info("Récupération des demandes avec statut: {}", status);
-//
-//            List<BankingRequest> requests = bankingRequestService.getRequestsByStatus(status);
-//
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("success", true);
-//            response.put("total", requests.size());
-//            response.put("data", requests);
-//
-//
-//            return ResponseEntity.ok(response);
-//
-//        } catch (Exception e) {
-//            logger.error("Erreur lors de la récupération des demandes par statut: {}", status, e);
-//
-//            Map<String, Object> errorResponse = new HashMap<>();
-//            errorResponse.put("success", false);
-//            errorResponse.put("message", "Erreur lors de la récupération des demandes");
-//
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-//}

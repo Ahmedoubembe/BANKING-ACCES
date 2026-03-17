@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.text.Normalizer;
 
 @Entity
 @Table(name = "banking_requests")
@@ -78,7 +79,10 @@ public class BankingRequest {
         }
 
         String modCode = this.modificationType != null
-                ? this.modificationType.substring(0, Math.min(3, this.modificationType.length())).toUpperCase()
+                ? Normalizer.normalize(
+                this.modificationType.substring(0, Math.min(3, this.modificationType.length())),
+                Normalizer.Form.NFD
+        ).replaceAll("\\p{InCombiningDiacriticalMarks}", "").toUpperCase()
                 : "XXX";
 
         String timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(this.createdDate);
