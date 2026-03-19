@@ -52,6 +52,19 @@ public class BankingRequest {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
+    @Column(name = "code", length = 50)
+    private String code;
+
+    @Column(name = "agence", length = 6)
+    private String agence;
+
+    @Column(name = "status_create", nullable = false, length = 50)
+    private String status_create;
+
+    @Column(name = "status_notif_last_date")
+    private LocalDateTime status_notif_last_date;
+
+
     @PrePersist
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();

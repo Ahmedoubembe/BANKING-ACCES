@@ -62,14 +62,20 @@ public class BankingRequestController {
                         data.put("createdDate", request.getCreatedDate());
                         data.put("updatedDate", request.getUpdatedDate());
                         data.put("reference", request.getReference());
+                        data.put("agence", request.getAgence());
+                        data.put("custIden", request.getCode());
+                        data.put("status_create", request.getStatus_create());
+                        data.put("status_notif_last_date", request.getStatus_notif_last_date());
+
+
 
                         clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
                                 .ifPresent(client -> {
-                                    data.put("custIden", client.getCustIden());
+//                                    data.put("custIden", client.getCustIden());
                                     data.put("emailSys", client.getEmail());
                                     data.put("firstName", client.getFirstName());
                                     data.put("lastName", client.getLastName());
-                                    data.put("agence", client.getWalletCode().substring(0, 5));
+//                                    data.put("agence", client.getWalletCode().substring(0, 5));
                                 });
 
                         return data;
@@ -111,6 +117,10 @@ public class BankingRequestController {
                         data.put("createdDate", request.getCreatedDate());
                         data.put("updatedDate", request.getUpdatedDate());
                         data.put("reference", request.getReference());
+                        data.put("agence", request.getAgence());
+                        data.put("custIden", request.getCode());
+                        data.put("status_create", request.getStatus_create());
+                        data.put("status_notif_last_date", request.getStatus_notif_last_date());
 
                         clientInfoRepository.findByPhoneNumber(request.getPhoneNumber())
                                 .ifPresent(client -> {
@@ -118,7 +128,7 @@ public class BankingRequestController {
                                     data.put("emailSys", client.getEmail());
                                     data.put("firstName", client.getFirstName());
                                     data.put("lastName", client.getLastName());
-                                    data.put("agence", client.getWalletCode().substring(0, 5));
+//                                    data.put("agence", client.getWalletCode().substring(0, 5));
                                 });
 
                         return data;

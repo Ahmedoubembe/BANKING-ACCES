@@ -40,7 +40,7 @@ public class PrimaryDataSourceConfig {
 
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "none");
+        properties.put("hibernate.hbm2ddl.auto", "update");
 
         return builder
                 .dataSource(dataSource)
