@@ -238,10 +238,21 @@ public class BankingRequestController {
             }
 
             BankingRequest bankingRequest = optionalRequest.get();
+
+            //  Vérification du statut avant clôture
+            if ("PENDING".equalsIgnoreCase(bankingRequest.getStatus())) {
+                response.put("success", false);
+                response.put("message", "Impossible de clôturer la demande : elle est toujours en attente de traitement");
+                response.put("status", bankingRequest.getStatus());
+                logger.warn("Tentative de cloture refusee - demande id={} toujours en statut PENDING", id);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+
             bankingRequest.setStatus("PROCESSED");
             bankingRequest.setUpdatedDate(LocalDateTime.now());
             bankingRequestRepository.save(bankingRequest);
 
+            response.put("success", true);
             response.put("message", "Demande cloturee avec succes");
             response.put("id", id);
             response.put("status", "PROCESSED");
@@ -251,6 +262,7 @@ public class BankingRequestController {
 
         } catch (Exception e) {
             logger.error("Erreur lors de la cloture de la demande id={}", id, e);
+            response.put("success", false);
             response.put("message", "Erreur lors de la cloture de la demande : " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
@@ -527,6 +539,8 @@ public class BankingRequestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+
 }
 
 

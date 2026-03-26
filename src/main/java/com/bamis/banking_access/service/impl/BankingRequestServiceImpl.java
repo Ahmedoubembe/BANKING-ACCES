@@ -1,13 +1,18 @@
 package com.bamis.banking_access.service.impl;
 
 import com.bamis.banking_access.entity.BankingRequest;
+import com.bamis.banking_access.entity.ClientInfo;
 import com.bamis.banking_access.repository.BankingRequestRepository;
 import com.bamis.banking_access.service.BankingRequestService;
 //import com.sun.org.slf4j.internal.LoggerFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -117,4 +122,5 @@ public class BankingRequestServiceImpl implements BankingRequestService {
 
         return result;
     }
+
 }
