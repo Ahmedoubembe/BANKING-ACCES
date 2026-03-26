@@ -360,6 +360,151 @@ public class BankingRequestController {
         if (lower.endsWith(".webp")) return "image/webp";
         return "application/octet-stream";
     }
+
+    @PostMapping("/submit")
+    public ResponseEntity<?> submitRequest(@RequestBody Map<String, Object> requestBody) {
+        try {
+            String code = getStr(requestBody, "code");
+            String requesterType = getStr(requestBody, "requesterType");
+
+            // Vérification existence du code dans epargne_client_info
+            if (code.isEmpty()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Le code client / code société est obligatoire");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            boolean codeExists = clientInfoRepository.findById(code).isPresent();
+            if (!codeExists) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Le code \"" + code + "\" n'existe pas dans le système. Veuillez vérifier le code saisi.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            BankingRequest request = BankingRequest.builder()
+                    .phoneNumber(getStr(requestBody, "phoneNumber"))
+                    .clientName(getStr(requestBody, "clientName"))
+                    .email(getStr(requestBody, "email"))
+                    .serviceType(getStr(requestBody, "serviceType"))
+                    .modificationType(getStr(requestBody, "modificationType"))
+                    .otherMessage(getStr(requestBody, "otherMessage"))
+                    .requesterType(requesterType)
+                    .code(code)
+                    .agence(getStr(requestBody, "agence"))
+                    .createdByLogin(getStr(requestBody, "createdByLogin"))
+                    .status("PENDING")
+                    .build();
+
+            BankingRequest saved = bankingRequestService.createRequestByGestionnaire(request);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Demande créée avec succès");
+            response.put("requestId", saved.getId());
+            response.put("reference", saved.getReference());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur création demande gestionnaire", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    // méthode utilitaire privée à ajouter dans le controller
+    private String getStr(Map<String, Object> body, String key) {
+        Object val = body.get(key);
+        return val != null ? val.toString().trim() : "";
+    }
+
+
+    @GetMapping("/by-code/{code}")
+    public ResponseEntity<?> getRequestsByCode(@PathVariable String code) {
+        try {
+            logger.info("Recuperation des demandes pour le code: {}", code);
+
+            List<BankingRequest> requests = bankingRequestRepository.findByCodeOrderByCreatedDateDesc(code);
+
+            List<Map<String, Object>> enrichedRequests = requests.stream()
+                    .map(request -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", request.getId());
+                        data.put("phoneNumber", request.getPhoneNumber());
+                        data.put("clientName", request.getClientName());
+                        data.put("email", request.getEmail());
+                        data.put("serviceType", request.getServiceType());
+                        data.put("modificationType", request.getModificationType());
+                        data.put("otherMessage", request.getOtherMessage());
+                        data.put("status", request.getStatus());
+                        data.put("createdDate", request.getCreatedDate());
+                        data.put("updatedDate", request.getUpdatedDate());
+                        data.put("reference", request.getReference());
+                        data.put("code", request.getCode());
+                        data.put("agence", request.getAgence());
+                        data.put("requesterType", request.getRequesterType());
+                        data.put("createdByLogin", request.getCreatedByLogin());
+
+                        clientInfoRepository.findById(request.getCode())
+                                .ifPresent(client -> {
+                                    data.put("custIden", client.getCustIden());
+                                    data.put("emailSys", client.getEmail());
+                                    data.put("firstName", client.getFirstName());
+                                    data.put("lastName", client.getLastName());
+                                    data.put("agence", client.getWalletCode() != null && client.getWalletCode().length() >= 5
+                                            ? client.getWalletCode().substring(0, 5) : client.getWalletCode());
+                                });
+
+                        return data;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("total", enrichedRequests.size());
+            response.put("data", enrichedRequests);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Erreur lors de la recuperation des demandes pour le code: {}", code, e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur lors de la recuperation des demandes");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+
+    @GetMapping("/phone/{phoneNumber}/has-pending")
+    public ResponseEntity<?> checkPendingRequest(@PathVariable String phoneNumber) {
+        boolean hasPending = bankingRequestService.hasPendingRequest(phoneNumber);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("hasPendingRequest", hasPending);
+
+        if (hasPending) {
+            // Récupérer la demande pour afficher sa référence au client
+            bankingRequestService.getRequestsByPhoneNumber(phoneNumber)
+                    .stream()
+                    .filter(r -> "PENDING".equals(r.getStatus()))
+                    .findFirst()
+                    .ifPresent(r -> {
+                        response.put("reference", r.getReference());
+                        response.put("createdDate", r.getCreatedDate());
+                        response.put("message",
+                                "Vous avez déjà une demande en attente (Réf: " + r.getReference() + "). " +
+                                        "Veuillez attendre sa clôture avant d'en soumettre une nouvelle."
+                        );
+                    });
+        }
+
+        return ResponseEntity.ok(response);
+    }
 }
 
 

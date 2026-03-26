@@ -196,6 +196,7 @@ public class WebSecurityConfig {
                                 .antMatchers("/api/banking-requests/*/justificatifs/**").permitAll()
                                 .antMatchers("/api/proxy/otp/**").permitAll()
                                 // Tout le reste nécessite un token
+                                .antMatchers("/api/banking-requests/phone/*/has-pending").permitAll()
                                 .anyRequest().authenticated()
                 );
 

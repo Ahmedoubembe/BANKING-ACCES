@@ -13,4 +13,8 @@ public interface BankingRequestRepository extends JpaRepository<BankingRequest, 
 
     // Récupérer les demandes par statut
     List<BankingRequest> findByStatusOrderByCreatedDateDesc(String status);
+
+    List<BankingRequest> findByCodeOrderByCreatedDateDesc(String code);
+
+    boolean existsByPhoneNumberAndStatus(String phoneNumber, String status);
 }

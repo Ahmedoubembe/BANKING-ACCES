@@ -41,4 +41,22 @@ public class BankingRequestServiceImpl implements BankingRequestService {
     public List<BankingRequest> getRequestsByStatus(String status) {
         return bankingRequestRepository.findByStatusOrderByCreatedDateDesc(status);
     }
+
+    @Override
+    @Transactional
+    public BankingRequest createRequestByGestionnaire(BankingRequest request) {
+        if (request.getStatus() == null) {
+            request.setStatus("PENDING");
+        }
+        if (request.getPhoneNumber() == null) {
+            request.setPhoneNumber("");
+        }
+        return bankingRequestRepository.save(request);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPendingRequest(String phoneNumber) {
+        return bankingRequestRepository.existsByPhoneNumberAndStatus(phoneNumber, "PENDING");
+    }
 }

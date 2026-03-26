@@ -26,4 +26,7 @@ public interface BankingRequestService {
      */
     List<BankingRequest> getRequestsByStatus(String status);
 
+    BankingRequest createRequestByGestionnaire(BankingRequest request);
+
+    boolean hasPendingRequest(String phoneNumber);
 }

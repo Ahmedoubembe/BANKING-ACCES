@@ -58,11 +58,17 @@ public class BankingRequest {
     @Column(name = "agence", length = 6)
     private String agence;
 
-    @Column(name = "status_create", nullable = false, length = 50)
+    @Column(name = "status_create", nullable = true, length = 50)
     private String status_create;
 
     @Column(name = "status_notif_last_date")
     private LocalDateTime status_notif_last_date;
+
+    @Column(name = "requester_type", length = 20)
+    private String requesterType; // "PARTICULIER" ou "SOCIETE"
+
+    @Column(name = "created_by_login", length = 100)
+    private String createdByLogin; // login du gestionnaire connecté
 
 
     @PrePersist
