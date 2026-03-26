@@ -3,6 +3,7 @@ package com.bamis.banking_access.service;
 import com.bamis.banking_access.entity.BankingRequest;
 
 import java.util.List;
+import java.util.Map;
 
 public interface BankingRequestService {
 
@@ -29,4 +30,6 @@ public interface BankingRequestService {
     BankingRequest createRequestByGestionnaire(BankingRequest request);
 
     boolean hasPendingRequest(String phoneNumber);
+
+    Map<String, Object> syncAndUpdate();
 }

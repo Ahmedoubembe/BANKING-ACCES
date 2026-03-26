@@ -505,6 +505,28 @@ public class BankingRequestController {
 
         return ResponseEntity.ok(response);
     }
+
+
+    @PostMapping("/sync-and-update")
+    public ResponseEntity<Map<String, Object>> syncAndUpdate() {
+        try {
+            System.out.println("Déclenchement sync-and-update");
+            Map<String, Object> result = bankingRequestService.syncAndUpdate();
+
+            if (Boolean.TRUE.equals(result.get("success"))) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(result);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Erreur lors du sync-and-update"+ e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Erreur interne : " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }
 
 
