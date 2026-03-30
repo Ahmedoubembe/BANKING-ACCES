@@ -1,6 +1,7 @@
 package com.bamis.banking_access.controller;
 
 import com.bamis.banking_access.entity.BankingRequest;
+import com.bamis.banking_access.entity.ClientInfo;
 import com.bamis.banking_access.entity.Justificatif;
 import com.bamis.banking_access.repository.JustificatifRepository;
 import com.bamis.banking_access.service.BankingRequestService;
@@ -22,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpMethod;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/banking-requests")
@@ -379,7 +384,6 @@ public class BankingRequestController {
             String code = getStr(requestBody, "code");
             String requesterType = getStr(requestBody, "requesterType");
 
-            // Vérification existence du code dans epargne_client_info
             if (code.isEmpty()) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -388,12 +392,59 @@ public class BankingRequestController {
             }
 
             boolean codeExists = clientInfoRepository.findById(code).isPresent();
+
+            // ---------------------------------------------------------------
+            // Si le code n'existe pas localement → on interroge l'API externe
+            // ---------------------------------------------------------------
             if (!codeExists) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "Le code \"" + code + "\" n'existe pas dans le système. Veuillez vérifier le code saisi.");
-                return ResponseEntity.badRequest().body(errorResponse);
+                try {
+                    String externalUrl = "http://172.25.25.18/optmzgen/json/47?cli=" + code;
+                    logger.info("Code {} introuvable localement, appel API externe : {}", code, externalUrl);
+
+                    RestTemplate restTemplate = new RestTemplate();
+                    ResponseEntity<List<Map<String, Object>>> externalResponse = restTemplate.exchange(
+                            externalUrl,
+                            HttpMethod.GET,
+                            null,
+                            new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                    );
+
+                    List<Map<String, Object>> externalData = externalResponse.getBody();
+
+                    if (externalData != null && !externalData.isEmpty()) {
+                        Map<String, Object> clientData = externalData.get(0);
+
+                        // Mapping vers l'entité ClientInfo
+                        ClientInfo newClient = new ClientInfo();
+                        newClient.setCustIden(getString(clientData, "CUST_IDEN"));
+                        newClient.setFirstName(getString(clientData, "FIRST_NAME"));
+                        newClient.setLastName(getString(clientData, "LAST_NAME"));
+                        newClient.setWalletCode(getString(clientData, "WALLET_CODE"));
+                        newClient.setPhoneNumber(getString(clientData, "PHONE_NUMBER"));
+                        newClient.setNif(getString(clientData, "NIF"));
+                        // email non retourné par l'API externe, on laisse null
+
+                        clientInfoRepository.save(newClient);
+                        logger.info("Client {} importé depuis l'API externe et sauvegardé", code);
+                        codeExists = true; // on peut continuer le submit
+
+                    } else {
+                        logger.warn("API externe ne retourne aucun résultat pour le code {}", code);
+                        Map<String, Object> errorResponse = new HashMap<>();
+                        errorResponse.put("success", false);
+                        errorResponse.put("message", "Le code \"" + code + "\" n'existe pas dans le système. Veuillez vérifier le code saisi.");
+                        return ResponseEntity.badRequest().body(errorResponse);
+                    }
+
+                } catch (Exception extEx) {
+                    logger.error("Erreur lors de l'appel à l'API externe pour le code {}", code, extEx);
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("success", false);
+                    errorResponse.put("message", "Le code \"" + code + "\" est introuvable et la vérification externe a échoué.");
+                    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
+                }
             }
+            // ---------------------------------------------------------------
 
             BankingRequest request = BankingRequest.builder()
                     .phoneNumber(getStr(requestBody, "phoneNumber"))
@@ -426,6 +477,12 @@ public class BankingRequestController {
             errorResponse.put("message", "Erreur: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+    }
+
+    // Méthode utilitaire pour extraire une String depuis la Map de l'API externe (gère null + trim)
+    private String getString(Map<String, Object> map, String key) {
+        Object val = map.get(key);
+        return val != null ? val.toString().trim() : null;
     }
 
     // méthode utilitaire privée à ajouter dans le controller
